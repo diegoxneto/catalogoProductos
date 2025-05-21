@@ -6,7 +6,7 @@
 
 $servername = getenv('DB_HOST') ?: 'localhost';
 $username = getenv('DB_USER') ?: 'root';
-$password = getenv('DB_PASSWORD') ?: 'Twentyone'; 
+$password = getenv('DB_PASSWORD') ?: 'Twentyone';
 $dbname = getenv('DB_NAME') ?: 'CatalogoProductos';
 
 // --- Crear la conexión ---
