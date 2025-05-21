@@ -1,23 +1,24 @@
 <?php
 
-// --- Configuración de la Base de Datos ---
-// Obtener variables de entorno.
-// Railway y Render inyectarán estas variables cuando se despliegue.
+// Render inyectará estas variables de entorno
+$db_host = getenv('PGHOST');
+$db_name = getenv('PGDATABASE');
+$db_user = getenv('PGUSER');
+$db_password = getenv('PGPASSWORD');
+$db_port = getenv('PGPORT');
 
-$servername = getenv('DB_HOST') ?: 'localhost';
-$username = getenv('DB_USER') ?: 'root';
-$password = getenv('DB_PASSWORD') ?: 'Twentyone';
-$dbname = getenv('DB_NAME') ?: 'CatalogoProductos';
+// $db_host = 'dpg-d0n6op1119vc7383an9g-a';
+// $db_name = 'renderdb_ah6o';
+// $db_user = 'admin';
+// $db_password = '3PIxdiLfRUMhaXOX0BRXJ90X3LN7jAHo'; 
+// $db_port = '5432';
 
-// --- Crear la conexión ---
-$conn = new mysqli($servername, $username, $password, $dbname);
-
-// --- Verificar la conexión ---
-if ($conn->connect_error) {
-    die("Conexión fallida: " . $conn->connect_error);
+try {
+    $dsn = "pgsql:host=$db_host;port=$db_port;dbname=$db_name;user=$db_user;password=$db_password";
+    $pdo = new PDO($dsn);
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    // echo "Conexión exitosa a la base de datos PostgreSQL.";
+} catch (PDOException $e) {
+    die("Error de conexión a la base de datos: " . $e->getMessage());
 }
-
-// Establecer el conjunto de caracteres a utf8mb4
-$conn->set_charset("utf8mb4");
-
 ?>
