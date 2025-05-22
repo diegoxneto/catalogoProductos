@@ -1,60 +1,59 @@
 <?php
-// Inicia la sesión PHP. Esto es necesario para poder usar $_SESSION
+// index.php
+
 session_start();
 
-// Opcional: Configuración para mostrar errores de PHP durante el desarrollo
-// error_reporting(E_ALL);
-// ini_set('display_errors', 1);
-
-// Incluye el archivo de conexión a la base de datos
-include 'conexion.php'; // Asegúrate de que 'conexion.php' esté en la misma carpeta o ajusta la ruta
+// Solo un require_once es suficiente
+require_once 'conexion.php'; 
 
 // 1. Si ya existe una sesión de usuario, redirige al usuario a la página principal
 if (isset($_SESSION['usuario_email'])) {
-    header('Location: productos.php'); // Redirige a productos.php si ya está logueado
-    exit(); // Importante: detener la ejecución después de la redirección
+    header('Location: productos.php');
+    exit();
 }
 
 // 2. Procesa el formulario de login cuando se envía (método POST)
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Obtiene los datos enviados por el formulario (email y password)
     $email = $_POST['email'];
-    $password = $_POST['password']; // ¡¡Nota de seguridad: Almacenar y comparar contraseñas en texto plano no es seguro en la vida real!!
+    $password = $_POST['password'];
 
-    // Consulta SQL para buscar el usuario por email
-    $sql = "SELECT id, nombre, email, password FROM usuarios WHERE email = ?";
-    $stmt = $conn->prepare($sql); // Prepara la consulta para evitar inyección SQL
-    $stmt->bind_param("s", $email); // 's' indica que el parámetro es un string
-    $stmt->execute();
-    $result = $stmt->get_result(); // Obtiene el resultado de la consulta
+    // ***** CAMBIOS AQUÍ PARA USAR PDO *****
+    try {
+        // Consulta SQL para buscar el usuario por email
+        // PDO usa marcadores de posición con nombre (:email) o con signo de interrogación (?)
+        $sql = "SELECT id, nombre, email, password FROM usuarios WHERE email = :email";
+        $stmt = $conn->prepare($sql); // <--- Ahora $conn es un objeto PDO válido
+        $stmt->bindParam(':email', $email, PDO::PARAM_STR); // 'PARAM_STR' para indicar que es un string
+        $stmt->execute();
+        
+        $usuario = $stmt->fetch(PDO::FETCH_ASSOC); // Obtiene los datos del usuario como un array asociativo
 
-    if ($result->num_rows === 1) {
-        // Si se encontró un usuario con ese email
-        $usuario = $result->fetch_assoc(); // Obtiene los datos del usuario
-        $stored_password = $usuario['password']; // Contraseña almacenada en la DB (texto plano en este ejemplo simple)
+        if ($usuario) { // Si se encontró un usuario
+            $stored_password = $usuario['password']; 
 
-        // ¡¡Comparación de contraseñas (simplificado para este ejemplo de tarea)!!
-        // En un sistema real, usarías password_verify() con contraseñas hasheadas
-        if ($password === $stored_password) {
-            // Si la contraseña coincide
-            $_SESSION['usuario_email'] = $usuario['email']; // Establece una variable de sesión
-            $_SESSION['usuario_id'] = $usuario['id']; // Opcional: guarda también el ID del usuario
-            $_SESSION['usuario_nombre'] = $usuario['nombre']; // Opcional: guarda el nombre del usuario
+            // ¡¡Comparación de contraseñas (simplificado)!!
+            // Idealmente, deberías usar password_verify() si las contraseñas están hasheadas con password_hash()
+            if ($password === $stored_password) { // <-- Si usas MD5 en DB, compara con MD5($password) aquí.
+                $_SESSION['usuario_email'] = $usuario['email'];
+                $_SESSION['usuario_id'] = $usuario['id'];
+                $_SESSION['usuario_nombre'] = $usuario['nombre'];
 
-            // Redirige al usuario a la página principal después del login exitoso
-            header('Location: productos.php');
-            exit();
+                header('Location: productos.php');
+                exit();
+            } else {
+                $error_message = "Email o contraseña incorrectos.";
+            }
         } else {
-            // Contraseña incorrecta
+            // No se encontró un usuario con ese email
             $error_message = "Email o contraseña incorrectos.";
         }
-    } else {
-        // No se encontró un usuario con ese email
-        $error_message = "Email o contraseña incorrectos.";
-    }
 
-    $stmt->close(); // Cierra la sentencia preparada
-    $conn->close(); // Cierra la conexión a la base de datos (puedes cerrar la conexión aquí o al final del script)
+    } catch (PDOException $e) {
+        $error_message = "Error en la consulta de login: " . $e->getMessage();
+        // Puedes loggear este error para producción en lugar de mostrarlo al usuario
+    }
+    // PDO no necesita un $stmt->close() ni $conn->close() explícito como mysqli.
+    // La conexión se cierra automáticamente al finalizar el script o cuando el objeto $conn es destruido.
 }
 
 // Si llegamos aquí, es porque no hay sesión activa y no se envió el formulario POST (o hubo un error).
@@ -74,14 +73,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            background-color: #f8f9fa; /* Un fondo gris claro */
+            background-color: #f8f9fa;
         }
         .login-container {
-            max-width: 400px; /* Ancho máximo del formulario */
+            max-width: 400px;
             padding: 30px;
             border-radius: 8px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            background-color: #ffffff; /* Fondo blanco para el formulario */
+            background-color: #ffffff;
         }
     </style>
 </head>
@@ -91,7 +90,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <h2 class="text-center mb-4">Iniciar Sesión</h2>
 
     <?php
-    // Muestra el mensaje de error si existe (definido en la sección PHP de arriba)
     if (isset($error_message)) {
         echo '<div class="alert alert-danger" role="alert">' . $error_message . '</div>';
     }
