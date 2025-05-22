@@ -19,6 +19,7 @@ WORKDIR /var/www/html
 
 # Copiar todos los archivos de tu proyecto al directorio de trabajo del contenedor
 COPY . .
+RUN docker-php-ext-install pdo pdo_pgsql
 
 # Configurar Apache para usar index.php por defecto (ya viene en la imagen apache)
 # Por defecto, la imagen php:apache ya configura Apache para servir desde /var/www/html
