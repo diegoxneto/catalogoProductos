@@ -2,13 +2,19 @@
 // Inicia la sesión PHP
 session_start();
 
+// Asegúrate de incluir el archivo de conexión a la base de datos
+require_once 'conexion.php'; // <--- ¡Esta es la línea que faltaba y es crucial!
+
 // Si el usuario NO está logueado, redirige a la página de login
 if (!isset($_SESSION['usuario_email'])) {
-    header('Location: login.php');
+    // Si tu página de login se llama index.php ahora, redirige a index.php
+    header('Location: index.php'); // O 'login.php' si decidiste mantenerlo así
     exit();
 }
 
 //Obtener el nombre del usuario para mostrarlo en la página
+// Esto asume que $_SESSION['usuario_nombre'] fue establecido en el login
+// Si no lo fue, usará el email, que es un buen fallback.
 $nombre_usuario = $_SESSION['usuario_nombre'] ?? $_SESSION['usuario_email'];
 
 ?>
@@ -21,14 +27,13 @@ $nombre_usuario = $_SESSION['usuario_nombre'] ?? $_SESSION['usuario_email'];
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.css">
     <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
-    <link rel="stylesheet" href="style.css">
-    <style>
+    <link rel="stylesheet" href="style.css"> <style>
         /* Estilos básicos para que la tabla se vea bien */
         body { padding-top: 20px; }
         .container { margin-top: 20px; }
         table.dataTable tbody td { font-size: 1.8vh; }
         table.dataTable thead th { background-color: orange; color: black; }
-                /* Estilos para animaciones  */
+        /* Estilos para animaciones  */
         .fade-out { opacity: 0; transition: opacity 0.5s ease-out; }
         .slide-up { transform: translateY(100%); opacity: 0; transition: transform 0.5s ease-out, opacity 0.5s ease-out; }
     </style>
@@ -91,8 +96,6 @@ $nombre_usuario = $_SESSION['usuario_nombre'] ?? $_SESSION['usuario_email'];
     </div>
 </div>
 
-
-
 <div id="successDialog" title="Operación Exitosa" style="display:none;">
     <p><span class="ui-icon ui-icon-check" style="float:left; margin:0 7px 50px 0;"></span><span id="successMessage"></span></p>
 </div>
@@ -104,10 +107,6 @@ $nombre_usuario = $_SESSION['usuario_nombre'] ?? $_SESSION['usuario_email'];
 <div id="confirmDeleteDialog" title="Confirmar Eliminación" style="display:none;">
     <p><span class="ui-icon ui-icon-help" style="float:left; margin:0 7px 20px 0;"></span>¿Estás seguro de que quieres eliminar este producto?</p>
 </div>
-
-
-
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
@@ -124,15 +123,15 @@ $(document).ready(function() {
 
     // Diálogo de éxito
     $("#successDialog").dialog({
-        autoOpen: false, // No abrir automáticamente
-        modal: true,    // Bloquear la interacción con el resto de la página
+        autoOpen: false,
+        modal: true,
         buttons: {
             "Aceptar": function() {
                 $(this).dialog("close");
             }
         },
-        show: { effect: "fade", duration: 500 }, // Animación de aparición
-        hide: { effect: "fade", duration: 500 }  // Animación de desaparición
+        show: { effect: "fade", duration: 500 },
+        hide: { effect: "fade", duration: 500 }
     });
 
     // Diálogo de error
@@ -144,8 +143,8 @@ $(document).ready(function() {
                 $(this).dialog("close");
             }
         },
-        show: { effect: "bounce", duration: 500 }, // Animación de aparición
-        hide: { effect: "explode", duration: 500 } // Animación de desaparición (podrías usar "fade" también)
+        show: { effect: "bounce", duration: 500 },
+        hide: { effect: "explode", duration: 500 }
     });
 
     // Diálogo de confirmación para eliminar
@@ -165,8 +164,8 @@ $(document).ready(function() {
                 $(this).dialog("close");
             }
         },
-        show: { effect: "clip", duration: 300 }, // Animación de aparición
-        hide: { effect: "blind", duration: 300 }  // Animación de desaparición
+        show: { effect: "clip", duration: 300 },
+        hide: { effect: "blind", duration: 300 }
     });
 
 
@@ -192,8 +191,8 @@ $(document).ready(function() {
             { "data": "id" },
             { "data": "nombre" },
             { "data": "precio" },
-            { "data": "categoria" },
-            { "data": "fecha_creacion" },
+            { "data": "categoria" }, // Asegúrate de que esta columna exista en tu tabla 'productos'
+            { "data": "fecha_creacion" }, // Asegúrate de que esta columna exista en tu tabla 'productos'
             {
                 "data": null,
                 "render": function (data, type, row) {
@@ -206,10 +205,8 @@ $(document).ready(function() {
         "language": {
             "url": "//cdn.datatables.net/plug-ins/1.11.5/i18n/es_es.json"
         },
-        // Animación al dibujar/recargar la tabla (Animación 3)
         "drawCallback": function(settings) {
-            // Animación: La tabla se desvanece y vuelve a aparecer suavemente al recargarse
-            $(this).hide().fadeIn(800); // 800ms para la animación de aparición
+            $(this).hide().fadeIn(800);
         }
     });
 
@@ -257,20 +254,19 @@ $(document).ready(function() {
 
         var nombre = $('#nombre').val().trim();
         var precio = $('#precio').val();
-        var categoria = $('#categoria').val().trim();
+        var categoria = $('#categoria').val().trim(); // <-- Asegúrate de que 'categoria' exista en tu tabla de productos
 
         // Validación frontend (Animación de shake si hay error)
         if (nombre === '' || precio === '' || categoria === '') {
             $("#errorMessage").text('Todos los campos son obligatorios.');
             $("#errorDialog").dialog("open");
-            // Animación de "shake" al modal o a los campos con error
             $('#productModal .modal-content').effect("shake", { times: 2 }, 100);
-            return; // Detener el envío del formulario
+            return;
         }
         if (isNaN(precio) || parseFloat(precio) <= 0) {
             $("#errorMessage").text('El precio debe ser un número positivo.');
             $("#errorDialog").dialog("open");
-            $('#precio').effect("highlight", { color: "#ffcccc" }, 500); // Resalta el campo
+            $('#precio').effect("highlight", { color: "#ffcccc" }, 500);
             return;
         }
 
@@ -297,15 +293,8 @@ $(document).ready(function() {
                     $("#successMessage").text(response.message);
                     $("#successDialog").dialog("open");
                     productosTable.ajax.reload(function() {
-                        // Animación de aparición de nueva fila o resaltado (Animación 2)
-                        // Es difícil animar solo la nueva fila con server-side processing directamente.
-                        // Lo más práctico es resaltar la tabla o la fila si supiéramos el ID.
-                        // Por ahora, el drawCallback ya anima la recarga de la tabla.
-                        // Si se agregó un producto, podríamos tratar de encontrarlo y animarlo
-                        if (!productId && response.id) { // Solo si es una creación
-                            // DataTables no da el 'row' directamente de un nuevo registro con serverSide
-                            // Podemos animar la tabla para la experiencia general
-                            $('#productosTable').hide().fadeIn(800); // Anima toda la tabla de nuevo
+                        if (!productId && response.id) {
+                            $('#productosTable').hide().fadeIn(800);
                         }
                     });
                 } else {
@@ -325,13 +314,12 @@ $(document).ready(function() {
     // --- Manejo de Eliminación con Diálogo de Confirmación y Animación ---
     $('#productosTable tbody').on('click', '.btnDelete', function () {
         var id = $(this).data('id');
-        var $rowToDelete = $(this).closest('tr'); // Referencia a la fila que vamos a eliminar
+        var $rowToDelete = $(this).closest('tr');
 
-        // Abrir el diálogo de confirmación de jQuery UI
         $("#confirmDeleteDialog").dialog({
             buttons: {
                 "Eliminar": function() {
-                    $(this).dialog("close"); // Cerrar el diálogo de confirmación
+                    $(this).dialog("close");
 
                     $.ajax({
                         url: 'api.php',
@@ -340,12 +328,10 @@ $(document).ready(function() {
                         dataType: 'json',
                         success: function(response) {
                             if (response.message) {
-                                // Animación de desaparición de la fila (Animación 1)
-                                $rowToDelete.fadeOut(500, function() { // Desvanecer la fila
-                                    // Después de la animación, recargar la tabla para que DataTables reorganice
+                                $rowToDelete.fadeOut(500, function() {
                                     $("#successMessage").text(response.message);
                                     $("#successDialog").dialog("open");
-                                    productosTable.ajax.reload(null, false); // No resetear la paginación al recargar
+                                    productosTable.ajax.reload(null, false);
                                 });
                             } else {
                                 $("#errorMessage").text('Respuesta inesperada del servidor al eliminar.');
@@ -364,13 +350,10 @@ $(document).ready(function() {
                     $(this).dialog("close");
                 }
             }
-        }).dialog("open"); // Abrir el diálogo
+        }).dialog("open");
     });
-
 });
 </script>
-
-
 
 </body>
 </html>
