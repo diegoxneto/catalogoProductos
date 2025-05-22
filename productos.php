@@ -55,6 +55,7 @@ $nombre_usuario = $_SESSION['usuario_nombre'] ?? $_SESSION['usuario_email'];
         <thead>
             <tr>
                 <th>ID</th>
+                <th>Imagen</th> <th>Fecha Creación</th>
                 <th>Nombre</th>
                 <th>Precio</th>
                 <th>Categoría</th>
@@ -88,6 +89,10 @@ $nombre_usuario = $_SESSION['usuario_nombre'] ?? $_SESSION['usuario_email'];
                     <div class="mb-3">
                         <label for="categoria" class="form-label">Categoría</label>
                         <input type="text" class="form-control" id="categoria" name="categoria" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="imagen_url" class="form-label">URL de Imagen</label>
+                        <input type="url" class="form-control" id="imagen_url" name="imagen_url" placeholder="https://ejemplo.com/imagen.jpg">
                     </div>
                     <button type="submit" class="btn btn-primary" id="btnSaveProduct">Guardar</button>
                 </form>
@@ -189,10 +194,20 @@ $(document).ready(function() {
         },
         "columns": [
             { "data": "id" },
+            { // Nueva columna para la imagen
+            "data": "imagen_url",
+            "render": function (data, type, row) {
+                if (data) {
+                    return '<img src="' + data + '" alt="Producto" style="width: 50px; height: auto; border-radius: 5px;">';
+                }
+                return ''; // Si no hay URL, no muestra nada
+            },
+            "orderable": false // Las imágenes no suelen ser ordenables
+            },
             { "data": "nombre" },
             { "data": "precio" },
-            { "data": "categoria" }, // Asegúrate de que esta columna exista en tu tabla 'productos'
-            { "data": "fecha_creacion" }, // Asegúrate de que esta columna exista en tu tabla 'productos'
+            { "data": "categoria" }, 
+            { "data": "fecha_creacion" }, 
             {
                 "data": null,
                 "render": function (data, type, row) {
@@ -231,6 +246,7 @@ $(document).ready(function() {
             success: function(response) {
                 if (response.id) {
                     $('#productId').val(response.id);
+                    $('#imagen_url').val(response.imagen_url);
                     $('#nombre').val(response.nombre);
                     $('#precio').val(response.precio);
                     $('#categoria').val(response.categoria);

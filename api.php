@@ -70,7 +70,7 @@ try { // Añadimos un try-catch global para capturar errores de PDO en el API
             $stmt_filtered = null;
 
             // --- 3. Obtener los datos para la página actual (filtrados, ordenados y paginados) ---
-            $sql_data = "SELECT id, nombre, precio, categoria, fecha_creacion FROM productos"
+            $sql_data = "SELECT id, nombre, imagen_url, precio, categoria, fecha_creacion FROM productos"
                         . $where_sql
                         . " ORDER BY " . $order_by_column . " " . strtoupper($order_direction) // ¡PDO es seguro con nombres de columna directos aquí si los obtienes de un array controlado!
                         . " LIMIT ? OFFSET ?"; // Sintaxis de paginación para PostgreSQL
@@ -108,6 +108,8 @@ try { // Añadimos un try-catch global para capturar errores de PDO en el API
             $nombre = $_POST['nombre'] ?? '';
             $precio = $_POST['precio'] ?? '';
             $categoria = $_POST['categoria'] ?? '';
+            $imagen_url = $_POST['imagen_url'] ?? NULL; // <--- Obtén la URL de la imagen. Usa NULL si está vacío.
+
 
             if (empty($nombre) || empty($precio) || empty($categoria)) {
                 http_response_code(400);
@@ -120,12 +122,13 @@ try { // Añadimos un try-catch global para capturar errores de PDO en el API
                 exit();
             }
 
-            $sql = "INSERT INTO productos (nombre, precio, categoria) VALUES (?, ?, ?)";
+            $sql = "INSERT INTO productos (nombre, imagen_url, precio, categoria) VALUES (?, ?, ?, ?)";
             $stmt = $conn->prepare($sql);
             // PDO::PARAM_STR para strings, PDO::PARAM_INT para enteros, PDO::PARAM_STR para decimales que se tratan como strings
             $stmt->bindValue(1, $nombre, PDO::PARAM_STR);
             $stmt->bindValue(2, $precio); // PDO infiere el tipo numérico
             $stmt->bindValue(3, $categoria, PDO::PARAM_STR);
+            $stmt->bindValue(4, $imagen_url, PDO::PARAM_STR);
 
             if ($stmt->execute()) {
                 http_response_code(201);
@@ -148,7 +151,7 @@ try { // Añadimos un try-catch global para capturar errores de PDO en el API
                 exit();
             }
 
-            $sql = "SELECT id, nombre, precio, categoria FROM productos WHERE id = ?";
+            $sql = "SELECT id, imagen_url, nombre, precio, categoria FROM productos WHERE id = ?";
             $stmt = $conn->prepare($sql);
             $stmt->bindValue(1, $id, PDO::PARAM_INT);
             $stmt->execute();
@@ -179,6 +182,7 @@ try { // Añadimos un try-catch global para capturar errores de PDO en el API
             }
 
             $id = isset($input_data['id']) ? intval($input_data['id']) : 0;
+            $imagen_url = $input_data['imagen_url'] ?? NULL;
             $nombre = $input_data['nombre'] ?? '';
             $precio = $input_data['precio'] ?? '';
             $categoria = $input_data['categoria'] ?? '';
@@ -194,12 +198,13 @@ try { // Añadimos un try-catch global para capturar errores de PDO en el API
                 exit();
             }
 
-            $sql = "UPDATE productos SET nombre = ?, precio = ?, categoria = ? WHERE id = ?";
+            $sql = "UPDATE productos SET nombre = ?, imagen_url = ?, precio = ?, categoria = ? WHERE id = ?";
             $stmt = $conn->prepare($sql);
-            $stmt->bindValue(1, $nombre, PDO::PARAM_STR);
-            $stmt->bindValue(2, $precio);
-            $stmt->bindValue(3, $categoria, PDO::PARAM_STR);
-            $stmt->bindValue(4, $id, PDO::PARAM_INT);
+            $stmt->bindValue(1, $imagen_url, PDO::PARAM_STR);
+            $stmt->bindValue(2, $nombre, PDO::PARAM_STR);
+            $stmt->bindValue(3, $precio);
+            $stmt->bindValue(4, $categoria, PDO::PARAM_STR);
+            $stmt->bindValue(5, $id, PDO::PARAM_INT);
 
             if ($stmt->execute()) {
                 if ($stmt->rowCount() > 0) { // rowCount() para PDO
